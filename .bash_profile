@@ -543,3 +543,5 @@ function gclip() { xclip -o $@; }
 #@see https://github.com/dattanchu/pymodoro
 alias v=vim
 alias vd=vimdiff
+#back up my essential /etc files at my ArchLinux
+alias bketc='tar zcvf /root/archlinux-etc.tar.gz /etc/rc.conf /etc/vconsole.conf /etc/locale.conf /etc/locale.gen /etc/localtime /etc/conf.d/* /etc/modules-load.d/*.conf /etc/network.d/ethernet-dhcp /etc/network.d/wifi-* /etc/netconfig /etc/adjtime /etc/hostname /etc/hosts'
