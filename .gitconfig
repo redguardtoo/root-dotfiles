@@ -1,0 +1,60 @@
+[apply]
+  whitespace = nowarn
+[user]
+  name = root
+  email = root@localhost
+[core]
+  ; @see http://comments.gmane.org/gmane.comp.version-control.git/166098
+  filemode = true
+  ;autocrlf=false
+  ;safecrlf=true
+[color]
+  diff = auto
+  status = auto
+  branch = auto
+[alias]
+  cl = clean -fxd
+  au = add -u
+  st = status -sb #short status output for geeks
+  rb = rebase
+  c = commit
+  co = checkout
+  b = branch
+  s=show
+  l = log --oneline --decorate --graph
+  d =diff
+  dw=diff --word-diff #highlight word changes
+  dc = diff --cached
+  t=stash
+  a=add
+  f=format-patch -n --stdout
+  rh=reset --hard
+  rs=reset --soft
+  cnt=count-objects
+  p=push
+  pl=pull
+  w = whatchanged
+  sb = show-branch
+  cp = cherry-pick
+  cpnx = cherry-pick --no-commit -x
+  rl = reflog
+  lp = log -p
+  lt = log --topo-order
+  gl = log --graph
+  brm = branch --merged
+  brnm = branch --no-merged
+  rnc = revert --no-commit
+  com = checkout master
+  me = merge --no-commit --no-ff
+  glt = log --pretty=format:'%h : %s' --topo-order --graph
+  phm = push heroku master
+  pom = push origin master
+  puom= pull origin master
+  untrac=rm -r --cached
+  u=reset --soft HEAD^ ;undo
+  #produce patch for hg
+  hgp = show --format=\"From: %an <%ae>%n%s%n%b\" -U8
+[sendemail]
+  smtpserver = /usr/sbin/ssmtp
+[push]
+  default = tracking
