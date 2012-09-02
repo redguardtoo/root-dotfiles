@@ -1,4 +1,6 @@
 root-dotfiles
 =============
 
-myt dotfiles as root at Linux host
+my dotfiles as root at Linux host.
+
+ Basically just shortcuts for bash/git operations
