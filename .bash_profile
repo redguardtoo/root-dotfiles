@@ -3,39 +3,41 @@ export HISTSIZE=40000
 #-------------------
 # Personnal Aliases
 #-------------------
+
+[ $(uname -s | grep -c CYGWIN) -eq 1 ] && OS_NAME="CYGWIN" || OS_NAME=`uname -s`
 #git
 # Git alias
 alias g="git status"
 alias ga="git add"
-alias gaa="git add ."
 alias gau="git add -u"
 alias gc="git commit -m"
 alias gca="git commit -am"
+alias gja="git --no-pager commit --amend --reuse-message=HEAD" # git just amend
 alias gb="git branch"
 alias gbd="git branch -d"
-alias gco="git checkout"
-alias gcob="git checkout -b"
+alias gnb="git checkout -b"
 alias gt="git stash"
 alias gta="git stash apply"
 alias gm="git merge"
 alias gr="git rebase"
 alias gl="git log --oneline --decorate --graph"
+alias glp="git log --date=short --decorate --graph --pretty=format:'%C(yellow)%h%Creset%C(green)%d%Creset %ad %s %Cred(%an)%Creset' -p"
 alias gs="git show"
+alias gss="git show --stat"
 alias gd="git diff"
+alias gds="git diff --stat"
 alias gdc="git diff --cached"
+alias gdcs="git diff --cached --stat"
 alias gbl="git blame"
 alias gps="git push"
 alias gpl="git pull"
-alias cdgr='cd $(git rev-parse --show-toplevel)' #goto root dir
+alias cg='cd $(git rev-parse --show-toplevel)' #goto root dir
 
 # sort and count lines,
 #@see http://felipec.wordpress.com/2011/06/02/command-history-meme/
 #alias cntl=awk '{a[$1]++} END{for(i in a){printf "%5d\t%s\n",a[i],i}}'|sort -rn
 alias rbt='reboot'
 alias bye='shutdown -h now'
-alias my='mystartx' #start my favourit WM
-alias p='pacman'
-alias y=yaourt
 #Example: rsync -avz --delete /home/username/ /media/disk/backup
 alias bkrsync="rsync -avz --delete"
 #grep and its alternatives
@@ -47,15 +49,6 @@ alias ak='ack --nocolor'
 alias qtsrc='cd /usr/share/doc/qt/src'
 alias rd='rdesktop -fP'
 alias armorphan='pacman -Rs $(pacman -Qqtd)'
-alias asortpkg="LC_ALL=C pacman -Qi | sed -n '/^Name[^:]*: \(.*\)/{s//\1 /;x};/^Installed[^:]*: \(.*\)/{s//\1/;H;x;s/\n//;p}' | sort -nk2"
-#archlinux pkg list if everything OK
-alias alpkg='comm -23 <(pacman -Qeq) <(pacman -Qmq)'
-alias ecp='emacs -batch -f batch-byte-compile'
-alias ebcp='emacs -batch -f batch-byte-compile *.el'
-alias es="emacs --daemon"
-alias te='tsocks emacs -nw'
-alias em='TERM=xterm-256color emacs -nw'
-alias ep='http_proxy=http://127.0.0.1:8000 TERM=xterm-256color emacs -nw'
 alias w3m='w3m -cookie '
 alias rm='rm '
 alias cp='cp '
@@ -80,17 +73,29 @@ alias dush='du -sh'
 alias reload='source ~/.bashrc'
 alias wget='wget -c'
 
-function e() {
-   TERM=xterm-256color emacsclient -a emacs "$@"
+function grepcmd () {
+    if hash ag 2>/dev/null; then
+        # @see http://stackoverflow.com/questions/592620/check-if-a-program-exists-from-a-bash-script
+        ag -s --silent --ignore='*.log' --ignore='*.properties' --ignore=TAGS --ignore=tags --ignore=GTAGS --ignore-dir='.svn' --ignore-dir=bower_components --ignore-dir=node_modules --ignore-dir=dist --ignore-dir=.sass-cache --ignore-dir='.cache' --ignore-dir=test --ignore-dir=tests --ignore-dir='.metadata' --ignore-dir=logs --ignore='#*#' --ignore='*.swp' --ignore='*.min.js' --ignore='*.min.css' --ignore='*~' "$@"
+    else
+        grep -rsnI --exclude='*.log' --exclude='*.properties' --exclude='TAGS' --exclude=tags --exclude=GTAGS --exclude-dir=.svn --exclude-dir=bower_components --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.sass-cache --exclude-dir=.cache  --exclude-dir=.cvs --exclude-dir=.git --exclude-dir=test --exclude-dir=tests --exclude-dir=.hg --exclude-dir=.metadata --exclude-dir=logs --exclude='#*#' --exclude='*.swp' --exclude='*.min.js' --exclude='*.min.css' --exclude='*~' --color=auto "$@"
+    fi
 }
 
-function en() {
-   TERM=xterm-256color emacsclient -a emacs -n "$@"
+function a () {
+    grepcmd "$@"
+}
+
+function e()
+{
+    if [ "$TERM" = "linux" ]; then
+        emacs -nw "$@"
+    else
+        TERM=xterm-256color emacs -nw "$@"
+    fi
 }
 
 alias df='df -kTh'
-alias ec="TERM=xterm-256color emacsclient"
-alias ge='grep -rsn --exclude-dir=.svn --exclude-dir=.cache  --exclude-dir=.cvs --exclude-dir=.git --exclude-dir=.hg --exclude=\*.swp --exclude=\*~ --color=auto'
 alias grpc='grep -I --exclude-dir=.svn --exclude-dir=.cache  --exclude-dir=.cvs --exclude-dir=.git --exclude-dir=.hg --exclude=\*.swp --exclude=\*~ --color=auto --include=*.{c,cpp,h,hpp,cc}' #-I := exclude binary files
 # The 'ls' family (this assumes you use the GNU ls)
 alias la='ls -Al'               # show hidden files
@@ -147,165 +152,6 @@ function xtitle ()
 	esac
 }
 
-# aliases...
-alias top='xtitle Processes on $HOST && top'
-alias make='xtitle Making $(basename $PWD) ; make'
-alias ncftp="xtitle ncFTP ; ncftp"
-
-# .. and functions
-function te()  # wrapper around xemacs/gnuserv
-{
-	if [ "$(gnuclient -batch -eval t 2>&-)" == "t" ]; then
-		gnuclient -q "$@";
-	else
-		( xemacs "$@" &);
-	fi
-}
-
-#-----------------------------------
-# File & strings related functions:
-#-----------------------------------
-
-# Find a file with a pattern in name:
-function ff()
-{ find . -type f -iname '*'$*'*' -ls ; }
-# Find a file with pattern $1 in name and Execute $2 on it:
-function fe()
-{ find . -type f -iname '*'$1'*' -exec "${2:-file}" {} \;  ; }
-# find pattern in a set of filesand highlight them:
-function fstr()
-{
-	OPTIND=1
-	local case=""
-	local usage="fstr: find string in files.
-	Usage: fstr [-i] \"pattern\" [\"filename pattern\"] "
-	while getopts :it opt
-	do
-		case "$opt" in
-			i) case="-i " ;;
-			*) echo "$usage"; return;;
-		esac
-	done
-	shift $(( $OPTIND - 1 ))
-	if [ "$#" -lt 1 ]; then
-		echo "$usage"
-		return;
-	fi
-	local SMSO=$(tput smso)
-	local RMSO=$(tput rmso)
-	find . -type f -name "${2:-*}" -print0 |
-	xargs -0 grep -sn ${case} "$1" 2>&- | \
-	sed "s/$1/${SMSO}\0${RMSO}/gI" | more
-}
-
-function cuttail() # Cut last n lines in file, 10 by default.
-{
-	nlines=${2:-10}
-	sed -n -e :a -e "1,${nlines}!{P;N;D;};N;ba" $1
-}
-
-function lowercase()  # move filenames to lowercase
-{
-	for file ; do
-		filename=${file##*/}
-		case "$filename" in
-			*/*) dirname==${file%/*} ;;
-			*) dirname=.;;
-		esac
-		nf=$(echo $filename | tr A-Z a-z)
-		newname="${dirname}/${nf}"
-		if [ "$nf" != "$filename" ]; then
-			mv "$file" "$newname"
-			echo "lowercase: $file --> $newname"
-		else
-			echo "lowercase: $file not changed."
-		fi
-	done
-}
-
-function swap()         # swap 2 filenames around
-{
-	local TMPFILE=tmp.$$
-	mv "$1" $TMPFILE
-	mv "$2" "$1"
-	mv $TMPFILE "$2"
-}
-
-# finds directory sizes and lists them for the current directory
-dirsize ()
-{
-    du -shx * .[a-zA-Z0-9_]* 2> /dev/null | \
-    egrep '^ *[0-9.]*[MG]' | sort -n > /tmp/list
-    egrep '^ *[0-9.]*M' /tmp/list
-    egrep '^ *[0-9.]*G' /tmp/list
-    rm -rf /tmp/list
-}
-
-#-----------------------------------
-# Process/system related functions:
-#-----------------------------------
-function my_ps()
-{ ps $@ -u $USER -o pid,%cpu,%mem,bsdtime,command ; }
-
-function pp()
-{ my_ps f | awk '!/awk/ && $0~var' var=${1:-".*"} ; }
-
-# This function is roughly the same as 'killall' on linux
-# but has no equivalent (that I know of) on Solaris
-function killps()   # kill by process name
-{
-	local pid pname sig="-TERM"   # default signal
-	if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then
-		echo "Usage: killps [-SIGNAL] pattern"
-		return;
-	fi
-	if [ $# = 2 ]; then sig=$1 ; fi
-	for pid in $(my_ps| awk '!/awk/ && $0~pat { print $1 }' pat=${!#} ) ; do
-		pname=$(my_ps | awk '$1~var { print $5 }' var=$pid )
-		if ask "Kill process $pid <$pname> with signal $sig?"
-		then kill $sig $pid
-		fi
-	done
-}
-
-function myip() # get IP adresses
-{
-  myip=`elinks -dump http://checkip.dyndns.org:8245/`
-  echo "${myip}"
-}
-
-function ii()   # get current host related info
-{
-	echo -e "\nYou are logged on ${RED}$HOST"
-	echo -e "\nAdditionnal information:$NC " ; uname -a
-	echo -e "\n${RED}Users logged on:$NC " ; w -h
-	echo -e "\n${RED}Current date :$NC " ; date
-	echo -e "\n${RED}Machine stats :$NC " ; uptime
-	echo -e "\n${RED}Memory stats :$NC " ; free
-	my_ip 2>&- ;
-	echo -e "\n${RED}Local IP Address :$NC" ; myip
-	echo
-}
-
-# Misc utilities:
-function repeat()       # repeat n times command
-{
-	local i max
-	max=$1; shift;
-	for ((i=1; i <= max ; i++)); do  # --> C-like syntax
-		eval "$@";
-	done
-}
-
-function ask()
-{
-	echo -n "$@" '[y/n] ' ; read ans
-	case "$ans" in
-		y*|Y*) return 0 ;;
-		*) return 1 ;;
-	esac
-}
-
 #=======================================================================
 #
 # PROGRAMMABLE COMPLETION - ONLY SINCE BASH-2.04
@@ -315,11 +161,6 @@ function ask()
 # You will in fact need bash-2.05a for some features
 #
 #=======================================================================
-if [ "${BASH_VERSION%.*}" \< "2.05" ]; then
-	echo "You will need to upgrade to version 2.05 for programmable completion"
-	return
-fi
-
 shopt -s extglob        # necessary
 set +o nounset          # otherwise some completions will fail
 
@@ -386,96 +227,6 @@ _longopts_func ()
 complete  -o default -F _longopts_func configure bash
 complete  -o default -F _longopts_func wget id info a2ps ls recode
 
-_make_targets ()
-{
-	local mdef makef gcmd cur prev i
-
-	COMPREPLY=()
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
-
-	# if prev argument is -f, return possible filename completions.
-	# we could be a little smarter here and return matches against
-	# `makefile Makefile *.mk', whatever exists
-	case "$prev" in
-		-*f)    COMPREPLY=( $(compgen -f $cur ) ); return 0;;
-	esac
-
-	# if we want an option, return the possible posix options
-	case "$cur" in
-		-)      COMPREPLY=(-e -f -i -k -n -p -q -r -S -s -t); return 0;;
-	esac
-
-	# make reads `makefile' before `Makefile'
-	if [ -f makefile ]; then
-		mdef=makefile
-	elif [ -f Makefile ]; then
-		mdef=Makefile
-	else
-		mdef=*.mk               # local convention
-	fi
-
-	# before we scan for targets, see if a makefile name was specified
-	# with -f
-	for (( i=0; i < ${#COMP_WORDS[@]}; i++ )); do
-		if [[ ${COMP_WORDS[i]} == -*f ]]; then
-			eval makef=${COMP_WORDS[i+1]}      # eval for tilde expansion
-			break
-		fi
-	done
-
-	[ -z "$makef" ] && makef=$mdef
-
-	# if we have a partial word to complete, restrict completions to
-	# matches of that word
-	if [ -n "$2" ]; then gcmd='grep "^$2"' ; else gcmd=cat ; fi
-
-	# if we don't want to use *.mk, we can take out the cat and use
-	# test -f $makef and input redirection
-	COMPREPLY=( $(cat $makef 2>/dev/null | \
-	awk 'BEGIN {FS=":"} /^[^.#   ][^=]*:/ {print $1}' \
-	| tr -s ' ' '\012' | sort -u | eval $gcmd ) )
-}
-
-complete -F _make_targets -X '+($*|*.[cho])' make gmake pmake
-
-# cvs(1) completion
-_cvs ()
-{
-	local cur prev
-	COMPREPLY=()
-	cur=${COMP_WORDS[COMP_CWORD]}
-	prev=${COMP_WORDS[COMP_CWORD-1]}
-
-	if [ $COMP_CWORD -eq 1 ] || [ "${prev:0:1}" = "-" ]; then
-		COMPREPLY=( $( compgen -W 'add admin checkout commit diff \
-		export history import log rdiff release remove rtag status \
-		tag update' $cur ))
-	else
-		COMPREPLY=( $( compgen -f $cur ))
-	fi
-	return 0
-}
-complete -F _cvs cvs
-
-_killall ()
-{
-	local cur prev
-	COMPREPLY=()
-	cur=${COMP_WORDS[COMP_CWORD]}
-
-	# get a list of processes (the first sed evaluation
-	# takes care of swapped out processes, the second
-	# takes care of getting the basename of the process)
-	COMPREPLY=( $( /usr/bin/ps -u $USER -o comm  | \
-	sed -e '1,1d' -e 's#[]\[]##g' -e 's#^.*/##'| \
-	awk '{if ($0 ~ /^'$cur'/) print $0}' ))
-
-	return 0
-}
-
-complete -F _killall killall killps
-
 # A meta-command completion function for commands like sudo(8), which
 # need to first complete on a command,
 # then complete according to that command's own
@@ -537,11 +288,39 @@ complete -o default -F _my_command nohup exec eval \
   trace truss strace sotruss gdb
 complete -o default -F _my_command command type which man nice
 
-function pclip() { xclip -selection c $@; }
-function gclip() { xclip -o $@; }
+# xclip has some problem with my emacs, so I use xsel for everything
+function gclip() {
+    if [ "$OS_NAME" = "CYGWIN" ]; then
+        getclip $@;
+    elif [ "$OS_NAME" = "Darwin" ]; then
+        pbpaste $@;
+    else
+        if [ -x /usr/bin/xsel ]; then
+            xsel -ob $@;
+        else
+            if [ -x /usr/bin/xclip ]; then
+                xclip -o $@;
+            else
+                echo "Neither xsel or xclip is installed!"
+            fi
+        fi
+    fi
+}
 
-#@see https://github.com/dattanchu/pymodoro
-alias v=vim
-alias vd=vimdiff
-#back up my essential /etc files at my ArchLinux
-alias bketc='tar zcvf /root/archlinux-etc.tar.gz /etc/rc.conf /etc/vconsole.conf /etc/locale.conf /etc/locale.gen /etc/localtime /etc/conf.d/* /etc/modules-load.d/*.conf /etc/network.d/ethernet-dhcp /etc/network.d/wifi-* /etc/netconfig /etc/adjtime /etc/hostname /etc/hosts'
+function pclip() {
+    if [ "$OS_NAME" = "CYGWIN" ]; then
+        putclip $@;
+    elif [ "$OS_NAME" = "Darwin" ]; then
+        pbcopy $@;
+    else
+        if [ -x /usr/bin/xsel ]; then
+            xsel -ib $@;
+        else
+            if [ -x /usr/bin/xclip ]; then
+                xclip -selection c $@;
+            else
+                echo "Neither xsel or xclip is installed!"
+            fi
+        fi
+    fi
+}

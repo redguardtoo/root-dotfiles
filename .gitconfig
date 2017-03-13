@@ -25,6 +25,7 @@
   d =diff
   dw=diff --word-diff #highlight word changes
   dc = diff --cached
+  dc = diff --cached --stat
   t=stash
   a=add
   f=format-patch -n --stdout
