@@ -7,19 +7,17 @@ export HISTSIZE=40000
 [ $(uname -s | grep -c CYGWIN) -eq 1 ] && OS_NAME="CYGWIN" || OS_NAME=`uname -s`
 #git
 # Git alias
-alias g="git status"
+alias gg="git status --short -b"
 alias ga="git add"
 alias gau="git add -u"
 alias gc="git commit -m"
 alias gca="git commit -am"
 alias gja="git --no-pager commit --amend --reuse-message=HEAD" # git just amend
 alias gb="git branch"
-alias gbd="git branch -d"
 alias gnb="git checkout -b"
-alias gt="git stash"
+alias gtt="git stash"
 alias gta="git stash apply"
-alias gm="git merge"
-alias gr="git rebase"
+alias gmt="git mergetool"
 alias gl="git log --oneline --decorate --graph"
 alias glp="git log --date=short --decorate --graph --pretty=format:'%C(yellow)%h%Creset%C(green)%d%Creset %ad %s %Cred(%an)%Creset' -p"
 alias gs="git show"
@@ -28,10 +26,13 @@ alias gd="git diff"
 alias gds="git diff --stat"
 alias gdc="git diff --cached"
 alias gdcs="git diff --cached --stat"
-alias gbl="git blame"
 alias gps="git push"
-alias gpl="git pull"
+alias gpf="git push --force"
+alias gpr="git pull -r"
 alias cg='cd $(git rev-parse --show-toplevel)' #goto root dir
+alias grh='git reset --hard HEAD'
+alias gr1='git reset --hard HEAD^'
+alias gr2='git reset --hard HEAD^^'
 
 # sort and count lines,
 #@see http://felipec.wordpress.com/2011/06/02/command-history-meme/
@@ -43,12 +44,7 @@ alias bkrsync="rsync -avz --delete"
 #grep and its alternatives
 #@see http://stackoverflow.com/questions/221921/grep-exclude-include- \
 #syntax-do-not-grep-through-certain-files
-alias vncsvr1440='vncserver -geometry 1440x900 -depth 16 :1'
-alias gfw='python ~/bin/goagent/proxy.py >/dev/null 2>&1'
-alias ak='ack --nocolor'
-alias qtsrc='cd /usr/share/doc/qt/src'
 alias rd='rdesktop -fP'
-alias armorphan='pacman -Rs $(pacman -Qqtd)'
 alias w3m='w3m -cookie '
 alias rm='rm '
 alias cp='cp '
@@ -56,35 +52,20 @@ alias mv='mv '
 # -> Prevents accidentally clobbering files.
 alias mkdir='mkdir -p'
 #I need clip between firefox
-alias clip='xclip -sel c'
-alias h='history'
 alias j='jobs -l'
 alias r='rlogin'
 alias which='type -all'
 alias path='echo -e ${PATH//:/\\n}'
 alias print='/usr/bin/lp -o nobanner -d $LPDEST'
-# Assumes LPDEST is defined
-alias pjet='enscript -h -G -fCourier9 -d $LPDEST'
-# Pretty-print using enscript
 alias background='xv -root -quit -max -rmode 5'
 # Put a picture in the background
 alias du='du -kh'
-alias dush='du -sh'
-alias reload='source ~/.bashrc'
 alias wget='wget -c'
 
 function grepcmd () {
-    if hash ag 2>/dev/null; then
-        # @see http://stackoverflow.com/questions/592620/check-if-a-program-exists-from-a-bash-script
-        ag -s --silent --ignore='*.log' --ignore='*.properties' --ignore=TAGS --ignore=tags --ignore=GTAGS --ignore-dir='.svn' --ignore-dir=bower_components --ignore-dir=node_modules --ignore-dir=dist --ignore-dir=.sass-cache --ignore-dir='.cache' --ignore-dir=test --ignore-dir=tests --ignore-dir='.metadata' --ignore-dir=logs --ignore='#*#' --ignore='*.swp' --ignore='*.min.js' --ignore='*.min.css' --ignore='*~' "$@"
-    else
-        grep -rsnI --exclude='*.log' --exclude='*.properties' --exclude='TAGS' --exclude=tags --exclude=GTAGS --exclude-dir=.svn --exclude-dir=bower_components --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.sass-cache --exclude-dir=.cache  --exclude-dir=.cvs --exclude-dir=.git --exclude-dir=test --exclude-dir=tests --exclude-dir=.hg --exclude-dir=.metadata --exclude-dir=logs --exclude='#*#' --exclude='*.swp' --exclude='*.min.js' --exclude='*.min.css' --exclude='*~' --color=auto "$@"
-    fi
+    grep -rsnI --exclude='archive-contents' --exclude='*.log' --exclude='*.properties' --exclude='TAGS' --exclude=tags --exclude=GTAGS --exclude-dir=.svn --exclude-dir=bower_components --exclude-dir=node_modules --exclude-dir=dist --exclude-dir=.sass-cache --exclude-dir=.cache  --exclude-dir=.cvs --exclude-dir=.git --exclude-dir=test --exclude-dir=tests --exclude-dir=.hg --exclude-dir=.metadata --exclude-dir=logs --exclude='#*#' --exclude='*.swp' --exclude='*.min.js' --exclude='*.min.css' --exclude='*~' --color=auto "$@"
 }
-
-function a () {
-    grepcmd "$@"
-}
+alias a=grepcmd
 
 function e()
 {
@@ -96,7 +77,6 @@ function e()
 }
 
 alias df='df -kTh'
-alias grpc='grep -I --exclude-dir=.svn --exclude-dir=.cache  --exclude-dir=.cvs --exclude-dir=.git --exclude-dir=.hg --exclude=\*.swp --exclude=\*~ --color=auto --include=*.{c,cpp,h,hpp,cc}' #-I := exclude binary files
 # The 'ls' family (this assumes you use the GNU ls)
 alias la='ls -Al'               # show hidden files
 alias ls='ls --show-control-chars --color=auto -hF'
@@ -106,13 +86,23 @@ alias lc='ls -lcr'		# sort by change time
 alias lu='ls -lur'		# sort by access time
 alias lr='ls -lR'               # recursive ls
 alias lt='ls -ltr'              # sort by date
-	alias lm='ls -al |more'         # pipe through 'more'
+alias lm='ls -al |more'         # pipe through 'more'
 function ll()
 { ls -l "$@"| egrep "^d" ; ls -lXB "$@" 2>&-| egrep -v "^d|total "; }
 alias tree='tree -Csu'		# nice alternative to 'ls'
-alias m='man'
-alias mk='make'
-alias cm='cmake'
+
+function m () {
+  $* --help | less
+}
+
+function mk() {
+    if [ "$OS_NAME" = "Darwin" ]; then
+        make -j$(sysctl -n hw.ncpu)
+    else
+        make -j$(nproc)
+    fi
+}
+
 #@see http://stackoverflow.com/questions/3746/whats-in-your-bashrc
 alias cd..="cd .."
 alias ..="cd .."
@@ -131,36 +121,6 @@ alias objdump='objdump -d -S -hrt'
 #export LESS='-i -N -w  -z-4 -g -e -M -X -F -R -P%t?f%f \
 #:stdin .?pb%pb\%:?lbLine %lb:?bbByte %bb:-...'
 
-# spelling typos - highly personnal :-)
-alias xs='cd'
-alias vf='cd'
-alias moer='more'
-alias moew='more'
-alias kk='ll'
-alias nospan="sed 's%</*span[^>]*>%%g'"
-
-#----------------
-# a few fun ones
-#----------------
-function xtitle ()
-{
-	case "$TERM" in
-		*term | rxvt)
-		echo -n -e "\033]0;$*\007" ;;
-		*)
-		;;
-	esac
-}
-
-#=======================================================================
-#
-# PROGRAMMABLE COMPLETION - ONLY SINCE BASH-2.04
-# Most are taken from the bash 2.05 documentation and from Ian McDonalds
-# 'Bash completion' package
-#  (http://www.caliban.org/bash/index.shtml#completion)
-# You will in fact need bash-2.05a for some features
-#
-#=======================================================================
 shopt -s extglob        # necessary
 set +o nounset          # otherwise some completions will fail
 
@@ -289,38 +249,5 @@ complete -o default -F _my_command nohup exec eval \
 complete -o default -F _my_command command type which man nice
 
 # xclip has some problem with my emacs, so I use xsel for everything
-function gclip() {
-    if [ "$OS_NAME" = "CYGWIN" ]; then
-        getclip $@;
-    elif [ "$OS_NAME" = "Darwin" ]; then
-        pbpaste $@;
-    else
-        if [ -x /usr/bin/xsel ]; then
-            xsel -ob $@;
-        else
-            if [ -x /usr/bin/xclip ]; then
-                xclip -o $@;
-            else
-                echo "Neither xsel or xclip is installed!"
-            fi
-        fi
-    fi
-}
-
-function pclip() {
-    if [ "$OS_NAME" = "CYGWIN" ]; then
-        putclip $@;
-    elif [ "$OS_NAME" = "Darwin" ]; then
-        pbcopy $@;
-    else
-        if [ -x /usr/bin/xsel ]; then
-            xsel -ib $@;
-        else
-            if [ -x /usr/bin/xclip ]; then
-                xclip -selection c $@;
-            else
-                echo "Neither xsel or xclip is installed!"
-            fi
-        fi
-    fi
-}
+alias gclip="xclip -o"
+alias pclip="xclip -selection c"
